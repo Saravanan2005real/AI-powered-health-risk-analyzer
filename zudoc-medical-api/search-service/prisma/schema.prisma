@@ -1,0 +1,53 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model drugs {
+  product_id            String  @id
+  product_name          String?
+  marketer              String?
+  composition           String?
+  medicine_type         String?
+  introduction          String?
+  description           String?
+  how_to_use            String?
+  safety_advise         String?
+  if_miss               String?
+  packaging_detail      String?
+  package               String?
+  qty                   String?
+  product_form          String?
+  mrp                   String?
+  prescription_required String?
+  fact_box              String?
+  primary_use           String?
+  storage               String?
+  common_side_effect    String?
+  alcohol_interaction   String?
+  pregnancy_interaction String?
+  lactation_interaction String?
+  driving_interaction   String?
+  kidney_interaction    String?
+  liver_interaction     String?
+  manufacturer_address  String?
+  country_of_origin     String?
+  q_a                   String?
+  how_it_works          String?
+  interaction           String?
+  manufacturer_details  String?
+  marketer_details      String?
+}
+
+model Draft {
+  id        String   @id @default(uuid())
+  patientId String   @unique
+  data      Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

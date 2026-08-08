@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+venv/
+ENV/
+bin/
+lib/
+include/
+dist/
+build/
+# *.pkl  # Keeping the model for deployment
+apnea-ecg-database-1.0.0/
+temp_*.dat
+data.csv
+.vscode/
+.idea/
