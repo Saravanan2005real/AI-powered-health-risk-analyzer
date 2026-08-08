@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>HealthGuard AI - Pitch Deck</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <!-- Reveal.js CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reset.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <!-- Custom Theme Overrides based on Reference PPT -->
+    <style>
+        body {
+            background: linear-gradient(135deg, #f0f8fb 0%, #e0f2f9 100%);
+            font-family: 'Inter', sans-serif;
+            color: #1e293b;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        
+        /* Persistent Top Navbar */
+        .top-nav {
+            position: fixed;
+            top: 40px;
+            left: 5%;
+            right: 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #94a3b8;
+            z-index: 1000;
+        }
+        .nav-links {
+            display: flex;
+            gap: 30px;
+            font-size: 16px;
+            font-weight: 500;
+            color: #334155;
+        }
+        .nav-links span.active {
+            font-weight: 600;
+            color: #000;
+        }
+        .nav-logo {
+            font-size: 24px;
+            font-weight: 600;
+            color: #0284c7;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Reveal Adjustments */
+        .reveal {
+            background: transparent;
+            font-family: 'Inter', sans-serif;
+        }
+        .reveal .slides {
+            text-align: left; /* Align everything to left like reference */
+            width: 90% !important;
+            margin: 0 auto;
+        }
+        
+        /* Typography */
+        .reveal h1, .reveal h2, .reveal h3, .reveal h4 {
+            font-family: 'Inter', sans-serif;
+            text-transform: none;
+            letter-spacing: -2px;
+            color: #0284c7;
+            margin: 0 0 20px 0;
+        }
+        .reveal h1 {
+            font-weight: 400;
+            font-size: 5em;
+            line-height: 1;
+        }
+        .reveal h2 {
+            font-weight: 400;
+            font-size: 3.5em;
+            line-height: 1.1;
+        }
+        .reveal h3 {
+            font-weight: 500;
+            font-size: 2em;
+        }
+        .reveal p, .reveal li {
+            font-weight: 400;
+            color: #334155;
+            line-height: 1.6;
+            font-size: 0.9em;
+        }
+        .reveal .subtitle-text {
+            font-size: 1.2em;
+            color: #0284c7;
+            font-style: italic;
+            margin-bottom: 30px;
+        }
+
+        /* UI Components */
+        .pill-btn {
+            display: inline-flex;
+            align-items: center;
+            border: 1px solid #0f172a;
+            border-radius: 50px;
+            padding: 5px 5px 5px 25px;
+            margin-top: 30px;
+        }
+        .pill-text {
+            font-size: 20px;
+            color: #0284c7;
+            margin-right: 20px;
+        }
+        .pill-inner {
+            background: #0284c7;
+            color: #fff;
+            padding: 12px 35px;
+            border-radius: 40px;
+            font-size: 20px;
+            font-weight: 500;
+        }
+
+        /* Cards */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 30px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+        
+        .card {
+            background: #ffffff;
+            border: 1px solid #475569;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.03);
+            height: 100%;
+            box-sizing: border-box;
+        }
+        .card.no-border {
+            border: none;
+            box-shadow: none;
+            background: transparent;
+            padding: 0;
+        }
+        .card h4 {
+            color: #0284c7;
+            font-size: 1.6em;
+            margin-bottom: 20px;
+            letter-spacing: -1px;
+        }
+        
+        /* Stats style */
+        .stat-large {
+            font-size: 3.5em;
+            font-weight: 300;
+            color: #0284c7;
+            letter-spacing: -2px;
+            margin: 0;
+        }
+        
+        /* Team styling */
+        .team-card {
+            background: #fff;
+            border: 1px solid #475569;
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+        }
+        .team-card h5 {
+            margin: 0;
+            font-size: 24px;
+            color: #1e293b;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+        }
+        .team-card p {
+            margin: 5px 0 0 0;
+            color: #0284c7;
+            font-size: 18px;
+        }
+
+        /* Blue Wave Footer Simulation */
+        .wave-footer {
+            position: absolute;
+            bottom: -50px;
+            left: -5%;
+            width: 110%;
+            height: 250px;
+            background: #0284c7;
+            border-radius: 50% 50% 0 0 / 20% 20% 0 0;
+            z-index: -1;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Persistent Header matching reference -->
+    <div class="top-nav">
+        <div class="nav-links">
+            <span class="active">Home</span>
+            <span>About</span>
+            <span>Problem</span>
+            <span>Service</span>
+            <span>Team</span>
+        </div>
+        <div class="nav-logo">
+            🏥 HealthGuard AI
+        </div>
+    </div>
+
+    <div class="reveal">
+        <div class="slides" style="margin-top: 100px;">
+            
+            <!-- Slide 1: Title -->
+            <section data-transition="slide">
+                <h1 style="margin-top: 15vh;">The Data Exists.<br>The Risk Is Hidden.</h1>
+                <div class="pill-btn">
+                    <span class="pill-text">HealthGuard AI :</span>
+                    <span class="pill-inner">Pitch Deck</span>
+                </div>
+                <p style="margin-top: 40px; max-width: 800px; font-size: 1.2em; font-style: italic;">
+                    Massive amounts of physiological data are generated every day, yet early signs of chronic diseases remain undetected until it is too late.
+                </p>
+            </section>
+
+            <!-- Slide 2: Problem -->
+            <section data-transition="slide">
+                <h2>PROBLEM</h2>
+                <div class="subtitle-text">Where the Current System Falls Short</div>
+                
+                <div class="card" style="margin-top: 40px; padding: 60px;">
+                    <div class="grid-2">
+                        <div>
+                            <h4>The Research Gap</h4>
+                            <ul>
+                                <li style="margin-bottom: 15px;"><strong>Reactive, not Proactive:</strong> Healthcare waits for symptoms to worsen before taking action.</li>
+                                <li><strong>Siloed Ecosystems:</strong> Diagnostics, AI prediction models, and Doctor portals do not seamlessly communicate.</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4>The Bottleneck</h4>
+                            <ul>
+                                <li style="margin-bottom: 15px;"><strong>Accessibility:</strong> High cost of comprehensive diagnostics like overnight Polysomnography.</li>
+                                <li><strong>Delayed Action:</strong> Raw data is useless without immediate clinical interpretation and response.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 3: Solution -->
+            <section data-transition="slide">
+                <h2>HealthGuard AI</h2>
+                <div class="subtitle-text">Turning Risk Into Action</div>
+                
+                <div class="grid-2" style="margin-top: 40px;">
+                    <div class="card">
+                        <h4>End-to-End Ecosystem</h4>
+                        <p>We are not just building a prediction model. We are bridging the gap between raw data and clinical action. Intelligent prediction models combined with immediate prescriptive workflows.</p>
+                    </div>
+                    <div class="card" style="background: #0284c7; color: white;">
+                        <h4 style="color: white;">The Workflow</h4>
+                        <p style="color: white; font-size: 1.2em; font-weight: 300;">
+                            1. Raw ECG Data<br><br>
+                            2. AI Risk Prediction<br><br>
+                            3. Clinical Workspace<br><br>
+                            4. Actionable Prescription
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 4: Stats / Why Apnea -->
+            <section data-transition="slide">
+                <h2>Why Did We Start<br>With Sleep Apnea?</h2>
+                
+                <div class="grid-2" style="margin-top: 60px;">
+                    <div class="card">
+                        <h3 class="stat-large">936M+</h3>
+                        <p>Adults worldwide suffer from mild to severe Obstructive Sleep Apnea (OSA). It acts as a silent trigger for severe cardiovascular conditions.</p>
+                    </div>
+                    <div class="card">
+                        <h3 class="stat-large">80%</h3>
+                        <p>Of cases remain entirely undiagnosed due to the friction and high cost of traditional overnight sleep studies. ECG signals offer a non-invasive alternative.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 5: Users -->
+            <section data-transition="slide">
+                <h2>One Platform.<br>Three Users.</h2>
+                
+                <div class="grid-3" style="margin-top: 50px;">
+                    <div class="card">
+                        <div style="font-size: 40px; color: #0284c7; margin-bottom: 20px;">👤</div>
+                        <h4>Patient Portal</h4>
+                        <p>Simple interface for physiological data upload and real-time access to clear, understandable prescriptions and health pamphlets.</p>
+                    </div>
+                    <div class="card">
+                        <div style="font-size: 40px; color: #0284c7; margin-bottom: 20px;">🩺</div>
+                        <h4>Doctor Portal</h4>
+                        <p>AI-assisted diagnosis, streamlined prescription generation, and a consolidated, prioritized patient queue.</p>
+                    </div>
+                    <div class="card">
+                        <div style="font-size: 40px; color: #0284c7; margin-bottom: 20px;">🔬</div>
+                        <h4>Lab Portal</h4>
+                        <p>Specialized testing integration and workflow management for advanced clinical diagnostics.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 6: Explainable AI -->
+            <section data-transition="slide">
+                <h2>Explainable AI &<br>Patient Experience</h2>
+                
+                <div class="grid-2" style="margin-top: 50px;">
+                    <div class="card">
+                        <h4>Vision 01: Intelligent Architecture</h4>
+                        <p>Our solution isn't a black box. By utilizing Random Forest classification and advanced feature extraction, we provide <strong>explainable confidence scores</strong> and precise risk levels (Mild, Moderate, Severe) that doctors can trust.</p>
+                    </div>
+                    <div class="card">
+                        <h4>Vision 02: Human-Centric Output</h4>
+                        <p>We bridge the communication gap by translating complex AI model outputs into actionable, understandable <strong>patient pamphlets</strong>, driving adherence and preventive care.</p>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Slide 7: Why HealthGuard -->
+            <section data-transition="slide">
+                <h2>Why HealthGuard AI?</h2>
+                
+                <div class="card" style="margin-top: 50px;">
+                    <div class="grid-2">
+                        <div>
+                            <h4>End-to-End Integration</h4>
+                            <p>From initial detection to consultation and final prescription writing, all within a unified ecosystem.</p>
+                        </div>
+                        <div>
+                            <h4>High Precision ML</h4>
+                            <p>Achieving 85.2% accuracy with low latency processing for near-instant clinical insights.</p>
+                        </div>
+                        <div>
+                            <h4>Enterprise Scalability</h4>
+                            <p>Powered by Go, Java, and Elasticsearch microservices for sub-second terminology search.</p>
+                        </div>
+                        <div>
+                            <h4>Workspace Isolation</h4>
+                            <p>Ensuring data integrity across different clinical domains and user roles.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 8: Impact -->
+            <section data-transition="slide">
+                <h1 style="font-size: 4.5em; margin-top: 10vh;">From Detection<br>To Prevention</h1>
+                <p style="margin-top: 30px; font-size: 1.4em; max-width: 800px;">
+                    Catching severe conditions early. Improving patient outcomes while significantly reducing the cognitive and administrative load on healthcare professionals.
+                </p>
+            </section>
+
+            <!-- Slide 9: Scalability -->
+            <section data-transition="slide">
+                <h2>Our Starting Point <br>— Not Our Limit</h2>
+                
+                <div class="card" style="margin-top: 50px; text-align: center; padding: 80px;">
+                    <h3 style="font-size: 2.5em; margin-bottom: 20px;">Cardiovascular Disease Prediction</h3>
+                    <p style="font-size: 1.2em;">
+                        The HealthGuard architecture is modular and scalable. We are ready to ingest new models, extending our reach across multiple chronic diseases.
+                    </p>
+                </div>
+            </section>
+
+            <!-- Slide 10: Team / Outro -->
+            <section data-transition="slide" style="position: relative; height: 100%;">
+                <h1 style="font-size: 4em; margin-top: 5vh;">Data → Risk →<br>Understanding → Action</h1>
+                
+                <div class="pill-btn" style="margin-top: 40px;">
+                    <span class="pill-text">SRM University :</span>
+                    <span class="pill-inner">The Team</span>
+                </div>
+
+                <div class="grid-4" style="margin-top: 50px;">
+                    <div class="team-card">
+                        <h5>Saravanan Sathishkumar</h5>
+                        <p>Lead Developer</p>
+                    </div>
+                    <div class="team-card">
+                        <h5>Evangelin John</h5>
+                        <p>Developer</p>
+                    </div>
+                    <div class="team-card">
+                        <h5>Daiwakshya</h5>
+                        <p>Developer</p>
+                    </div>
+                    <div class="team-card">
+                        <h5>Sumukesh</h5>
+                        <p>Developer</p>
+                    </div>
+                </div>
+                
+                <!-- Matching the wavy blue background from reference for the team slide -->
+                <div class="wave-footer"></div>
+            </section>
+
+        </div>
+    </div>
+
+    <!-- Reveal.js Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.js"></script>
+    <script>
+        Reveal.initialize({
+            hash: true,
+            transition: 'slide',
+            controls: true,
+            progress: true,
+            center: false,
+            width: 1200,
+            height: 800,
+            margin: 0.1,
+            disableLayout: false
+        });
+    </script>
+</body>
+</html>

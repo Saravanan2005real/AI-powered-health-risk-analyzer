@@ -22,22 +22,31 @@ def write_db(data):
     with open(DB_FILE, "w") as f:
         json.dump(data, f, indent=4)
 
-def add_submission(user_email, patient_data, file_path):
+def add_submission(user_email, file_path):
     db = read_db()
     sub_id = str(uuid.uuid4())
     new_submission = {
         "id": sub_id,
         "user_email": user_email,
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "patient_data": patient_data,
+        "patient_data": None,
         "file_path": file_path,
-        "status": "Pending",
+        "status": "At User",
         "prediction": None,
         "prescription": None
     }
     db["submissions"].append(new_submission)
     write_db(db)
     return sub_id
+
+def update_patient_details(sub_id, patient_data):
+    db = read_db()
+    for sub in db["submissions"]:
+        if sub["id"] == sub_id:
+            sub["patient_data"] = patient_data
+            sub["status"] = "At Doctor"
+            break
+    write_db(db)
 
 def get_submissions_by_user(user_email):
     db = read_db()

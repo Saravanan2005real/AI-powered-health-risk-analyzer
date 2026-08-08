@@ -1,113 +1,207 @@
-# AI-Powered Health Risk Analyzer & Clinical Portal
+# HealthGuard AI — AI-Powered Health Risk Analyzer
 
-An enterprise-grade, multi-role medical ecosystem combining an AI-powered Sleep Apnea ECG prediction model with a full-stack clinical terminology and prescription management system. 
+An end-to-end clinical ecosystem that turns ECG signals into explainable sleep apnea risk predictions, then routes them through Lab, Patient, and Doctor portals into actionable prescriptions — with optional SNOMED CT terminology search via the Zudoc medical stack.
 
-This repository is a monolithic integration of two major systems:
-1. **Sleep Apnea Prediction System**: A Python/Streamlit based AI model analyzing ECG signals to predict sleep apnea risk levels.
-2. **Zudoc Medical API**: A robust React + Go/Java microservice backend for high-performance clinical terminology search (SNOMED CT) and prescription management.
+**Data → Predict → Automate → Resolve**
+
+| | |
+| :--- | :--- |
+| **Primary focus** | Obstructive Sleep Apnea (OSA) screening from ECG |
+| **Model** | Random Forest · **85.2%** accuracy (PhysioNet Apnea-ECG) |
+| **Portals** | Laboratory · Patient · Doctor (Streamlit) |
+| **Clinical stack** | React prescription UI · Go proxy · Java Snowstorm · Elasticsearch |
+| **Team** | SRM University — Saravanan Sathishkumar, Evangelin John, Daiwakshya, Sumukesh |
 
 ---
 
-## 🏛️ System Architecture
+## Repository layout
 
-The platform supports a comprehensive clinical workflow from patient data intake to automated AI diagnosis and final doctor prescription generation.
+```text
+├── Sleep-apnea-prediction-using-ecg/   # Multi-role Streamlit app + ML model
+├── zudoc-medical-api/                  # Clinical terminology + prescription UI
+├── healthguard-presentation/           # React pitch deck (Vite)
+├── presentation.html                   # Standalone Reveal.js pitch deck
+├── ARCHITECTURE.md                     # Detailed system architecture
+└── reference ppt.pdf                   # Reference presentation
+```
+
+---
+
+## System architecture
+
+HealthGuard connects diagnostics, AI screening, and clinical action in one workflow.
 
 ```mermaid
-graph TD
-    subgraph "Frontend & Portals"
-        PatientUI[Patient Portal]
-        DoctorUI[Doctor Portal]
-        ZudocUI[Zudoc React Frontend]
+flowchart TB
+    subgraph Portals["Layer 1 — User Portals (Streamlit)"]
+        Lab[Lab Portal]
+        Patient[Patient Portal]
+        Doctor[Doctor Portal]
     end
 
-    subgraph "Backend Services"
-        StreamlitRouter[Streamlit Router & Auth]
-        PredictionEngine[Random Forest ECG ML Model]
-        SearchProxy[Go Search Proxy]
-        JavaAPI[Java Snowstorm API]
+    subgraph App["Layer 2 — Application Services"]
+        Auth[Role-based Auth]
+        Queue[Submission Queue]
+        Notif[Status & Records]
     end
 
-    subgraph "Databases"
-        JSONDB[(Session/Draft JSON DB)]
-        Postgres[(PostgreSQL)]
+    subgraph AI["Layer 3 — AI Engine"]
+        WFDB[WFDB ECG Processing]
+        Feat[RR / HRV Feature Extraction]
+        RF[Random Forest Classifier]
+        Llama[Patient Pamphlet / LLM-ready text]
+    end
+
+    subgraph Clinical["Layer 4 — Clinical Terminology (Zudoc)"]
+        ReactUI[React Prescription UI]
+        GoProxy[Go / Fiber Search Proxy]
+        Snowstorm[Java Snowstorm API]
+        SNOMED[SNOMED CT]
+    end
+
+    subgraph Data["Layer 5 — Data"]
+        JSON[(JSON Session DB)]
+        PG[(PostgreSQL)]
         ES[(Elasticsearch 8.x)]
-        OpenSearch[(OpenSearch)]
+        OS[(OpenSearch)]
     end
 
-    PatientUI -- "1. Upload ECG & Data" --> StreamlitRouter
-    StreamlitRouter -- "Saves" --> JSONDB
-    DoctorUI -- "2. View Pending & Trigger AI" --> PredictionEngine
-    PredictionEngine -- "Analyzes ECG" --> DoctorUI
-    DoctorUI -- "3. Write Prescription" --> JSONDB
-    JSONDB -- "4. Send Pamphlet" --> PatientUI
-    
-    ZudocUI -- "Terminology Search" --> SearchProxy
-    SearchProxy -- "SNOMED Queries" --> JavaAPI
-    JavaAPI --> ES
-    SearchProxy -- "Medication Searches" --> OpenSearch
-    SearchProxy -- "Save Drafts" --> Postgres
+    Lab -->|Upload ECG .dat/.csv/.txt| Queue
+    Queue -->|status: At User| Patient
+    Patient -->|Vitals + forward| Queue
+    Queue -->|status: At Doctor| Doctor
+    Doctor -->|Run AI Prediction| WFDB
+    WFDB --> Feat --> RF
+    RF -->|risk + confidence| Doctor
+    Doctor -->|Prescription| Queue
+    Queue -->|status: Completed| Patient
+    Doctor -.-> Llama
+
+    ReactUI --> GoProxy
+    GoProxy --> Snowstorm --> ES
+    Snowstorm --> SNOMED
+    GoProxy --> OS
+    GoProxy --> PG
+    Queue --> JSON
+    Auth --> Portals
+    Notif --> Patient
 ```
 
+### Clinical submission lifecycle
+
+```mermaid
+stateDiagram-v2
+    [*] --> AtUser: Lab uploads ECG for patient email
+    AtUser --> AtDoctor: Patient adds vitals & forwards
+    AtDoctor --> Predicted: Doctor runs Random Forest on ECG
+    Predicted --> Completed: Doctor writes & sends prescription
+    Completed --> [*]
+```
+
+| Status | Owner | Action |
+| :--- | :--- | :--- |
+| `At User` | Patient | Review lab ECG package, enter vitals (age, SpO₂, etc.), forward to doctor |
+| `At Doctor` | Doctor | Run AI prediction on ECG |
+| `Predicted` | Doctor | Review risk level + confidence, write prescription |
+| `Completed` | Patient | View medical record & prescription pamphlet |
+
+Full diagrams and layer notes: **[ARCHITECTURE.md](./ARCHITECTURE.md)**.
+
 ---
 
-## 🛠️ Technology Stack
+## Technology stack
 
-### AI Prediction System (Sleep Apnea)
-- **Frontend & Routing**: Streamlit (Python)
-- **Machine Learning**: Scikit-Learn (Random Forest Classifier), Pandas, NumPy, WFDB (for ECG parsing)
-- **Data Persistence**: Local JSON simulation (`db_handler.py`)
-- **UI/UX**: Custom injected CSS mirroring clean, light medical themes.
+### Sleep Apnea AI & portals
+- **UI / routing:** Streamlit (Python)
+- **ML:** Scikit-Learn Random Forest, Pandas, NumPy, WFDB
+- **Persistence:** Local JSON (`db_handler.py`)
+- **Assist:** In-app medical chatbot
 
-### Clinical Portal (Zudoc)
-- **Frontend**: React 18, Vite, TypeScript, TailwindCSS
-- **Search Proxy Microservice**: Go (Fiber), `singleflight` query coalescing, thread-safe memory TTL cache
-- **Terminology Server**: Java (Snowstorm API)
-- **Databases**:
-  - PostgreSQL 15 (Patient Prescription Drafts)
-  - Elasticsearch 8.x (SNOMED CT evaluation)
-  - OpenSearch 2.9 (Pharmaceutical Searches)
-- **Containerization**: Docker & Docker Compose
+### Zudoc clinical portal
+- **Frontend:** React 18, Vite, TypeScript, Tailwind
+- **Search proxy:** Go (Fiber), query coalescing, TTL cache
+- **Terminology:** Java Snowstorm (SNOMED CT)
+- **Data:** PostgreSQL 15 · Elasticsearch 8.x · OpenSearch 2.9
+- **Ops:** Docker Compose
+
+### Pitch decks
+- `healthguard-presentation/` — React + Framer Motion slides
+- `presentation.html` — Reveal.js standalone deck
 
 ---
 
-## 🚀 Getting Started (Run Instructions)
+## Getting started
 
-The repository contains all components. You will need to run the AI Model and the Zudoc Frontend/Backend in separate terminal sessions.
+### 1. AI portals & prediction (required for demo)
 
-### 1. Run the AI Prediction Model & Portal
-This component handles the multi-role (Patient/Doctor/Lab) portal and ECG predictions.
 ```bash
-# Navigate to the sleep apnea project directory
 cd Sleep-apnea-prediction-using-ecg
-
-# Install Python dependencies
 pip install -r requirements.txt
-
-# Start the Streamlit application
 streamlit run app.py
 ```
-*Access the portal at `http://localhost:8501`. Login with any email/password.*
 
-### 2. Run the Zudoc Frontend
-This handles the specialized prescription creation interface.
+Open `http://localhost:8501`. Sign in with any email/password and pick a role:
+
+1. **Lab** — upload ECG and target patient email  
+2. **Patient** — add vitals and forward to doctor  
+3. **Doctor** — run AI prediction and send prescription  
+
+### 2. HealthGuard presentation
+
 ```bash
-# Navigate to the frontend directory
-cd zudoc-medical-api/Prescriptioncreationinterface-main
-
-# Install Node dependencies
+cd healthguard-presentation
 npm install
-
-# Start the development server
 npm run dev
 ```
-*Access the UI at `http://localhost:5173`.*
 
-### 3. Run the Zudoc Backend Microservices
-Ensure Docker Desktop is running before executing.
+Or open `presentation.html` directly in a browser.
+
+### 3. Zudoc prescription UI
+
 ```bash
-# Navigate to the zudoc root directory
-cd zudoc-medical-api
+cd zudoc-medical-api/Prescriptioncreationinterface-main
+npm install
+npm run dev
+```
 
-# Start all databases and services in detached mode
+### 4. Zudoc backend (Docker)
+
+```bash
+cd zudoc-medical-api
 docker-compose up -d
 ```
+
+---
+
+## Model performance
+
+Trained on the **PhysioNet Apnea-ECG Database**.
+
+| Metric | Value |
+| :--- | :--- |
+| Accuracy | 85.2% |
+| Precision | 82.1% |
+| Recall | 78.9% |
+| F1-Score | 80.4% |
+| ROC-AUC | 0.87 |
+
+**12 features:** time-domain stats, energy/RMS, zero-crossing rate, HRV-related difference measures.
+
+---
+
+## Disclaimer
+
+For **preliminary screening and educational use only**. Not a substitute for professional medical diagnosis or treatment.
+
+---
+
+## Team
+
+| Name | Role |
+| :--- | :--- |
+| Saravanan Sathishkumar | Lead Architect & AI Integration |
+| Evangelin John | Frontend & UX |
+| Daiwakshya | Backend Microservices |
+| Sumukesh | Data & Systems Infrastructure |
+
+**Institution:** SRM University

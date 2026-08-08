@@ -5,48 +5,52 @@
 ![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
 ![Streamlit](https://img.shields.io/badge/Streamlit-Dashboard-red)
 
-An AI-powered medical diagnostic screening tool that detects Sleep Apnea patterns in ECG (Electrocardiogram) signals. Using advanced feature extraction and a Random Forest classifier, this system provides a non-invasive, quick, and reliable preliminary assessment of sleep apnea severity.
+Core AI module of **HealthGuard AI**: ECG-based Obstructive Sleep Apnea (OSA) screening with a multi-role clinical workflow (Lab → Patient → Doctor).
 
-## 🏥 Project Overview
+## Overview
 
-Sleep apnea is a serious sleep disorder where breathing repeatedly stops and starts. Traditional diagnosis (Polysomnography) is expensive and intrusive. This project leverages the correlation between heart rate variability (captured via ECG) and respiratory effort to provide a cost-effective screening solution.
+Traditional OSA diagnosis (polysomnography) is costly and intrusive. This system uses heart-rate variability patterns in ECG to provide a fast, non-invasive preliminary severity assessment — then routes results through real clinical roles instead of stopping at a raw model score.
 
-### Key Features
-- **ECG-Based Detection**: Analyze standard ECG signals for apnea patterns.
-- **Machine Learning Analysis**: High-performance Random Forest model with **85.2% accuracy**.
-- **Severity Classification**: Automatically categorizes results into Normal, Mild, Moderate, or Severe.
-- **Interactive Dashboard**: Modern, glassmorphic UI built with Streamlit.
-- **Smart Chatbot**: Integrated medical assistant for sleep apnea queries.
-- **Signal Visualization**: Real-time plotting of ECG windows and detection events.
+### Key features
 
-## 📐 System Architecture
+- **ECG-based detection** — `.dat`, `.csv`, `.txt` uploads  
+- **Random Forest** — ~**85.2%** accuracy on PhysioNet Apnea-ECG  
+- **Severity classes** — Normal · Mild · Moderate · Severe (+ confidence)  
+- **Three portals** — Laboratory, Patient, Doctor  
+- **Chatbot** — In-app sleep apnea assistant  
+- **Signal plots** — ECG windows and detection visuals  
 
-The following diagram illustrates the data flow and system components:
+## Clinical workflow architecture
+
+```mermaid
+flowchart LR
+    Lab[Lab Portal] -->|Upload ECG<br/>status: At User| Patient[Patient Portal]
+    Patient -->|Add vitals<br/>status: At Doctor| Doctor[Doctor Portal]
+    Doctor -->|Run RF model<br/>status: Predicted| Doctor
+    Doctor -->|Write Rx<br/>status: Completed| Patient
+```
 
 ```mermaid
 graph TD
-    A[ECG Signal Source] -->|Raw Data| B(Preprocessing)
-    B -->|30s Windows| C(Feature Extraction)
-    
-    subgraph "AI Engine"
-    C -->|12 Statistical Features| D{Random Forest Classifier}
-    D -->|Probability| E[Diagnosis & Severity]
+    A[ECG Signal] -->|Raw data| B[Preprocessing / WFDB]
+    B -->|Windows| C[Feature Extraction]
+    subgraph AI["AI Engine"]
+        C -->|12 features| D{Random Forest}
+        D -->|Probability| E[Risk & Severity]
     end
-    
-    E -->|Results| F[Streamlit UI]
-    G[Chatbot Knowledge Base] -->|Support| F
-    
-    subgraph "Technologies"
-    H[Python]
-    I[Scikit-Learn]
-    J[WFDB Library]
-    K[Streamlit]
-    end
+    E --> F[Doctor Portal]
+    F --> G[Prescription → Patient]
+    H[Chatbot] -->|Support| PatientUI[Patient Portal]
 ```
 
-## 📊 Model Performance
+| Status | Meaning |
+| :--- | :--- |
+| `At User` | Lab sent ECG; patient must enter vitals |
+| `At Doctor` | Ready for AI prediction |
+| `Predicted` | AI done; doctor writes prescription |
+| `Completed` | Patient can view prescription |
 
-Our model was trained on the **PhysioNet Apnea-ECG Database** and achieved the following metrics:
+## Model performance
 
 | Metric | Value |
 | :--- | :--- |
@@ -56,56 +60,53 @@ Our model was trained on the **PhysioNet Apnea-ECG Database** and achieved the f
 | **F1-Score** | 80.4% |
 | **ROC-AUC** | 0.87 |
 
-### Features Extracted (12 Total)
-- **Time Domain**: Mean, Std Dev, Min, Max, Median, Percentiles (25th/75th).
-- **Energy/Power**: Signal Energy, RMS (Root Mean Square).
-- **Complexity**: Zero Crossing Rate.
-- **HRV Indicators**: Std Dev of differences, Mean Absolute Difference.
+### Features extracted (12)
 
-## 🚀 Getting Started
+- **Time domain:** mean, std, min, max, median, 25th/75th percentiles  
+- **Energy:** signal energy, RMS  
+- **Complexity:** zero-crossing rate  
+- **HRV-related:** std of differences, mean absolute difference  
+
+## Getting started
 
 ### Prerequisites
-- Python 3.8 or higher
-- Git
 
-### Installation
+- Python 3.8+  
+- Git  
 
-1. **Get the project**:
+### Install & run
 
-   **Option A — Clone via Git:**
-   ```bash
-   git clone git@github.com:Saravanan2005real/Sleep-apnea-prediction-using-ecg.git
-   cd Sleep-apnea-prediction-using-ecg
-   ```
+From the **repository root**:
 
-   **Option B — Download ZIP:**
-   Download the ZIP from GitHub, extract it, then open a terminal *inside* the extracted folder (e.g. `Sleep-apnea-prediction-using-ecg-main`). No `cd` to a subfolder is needed.
-
-2. **Install dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. **Run the application**:
-   ```bash
-   streamlit run app.py
-   ```
-
-## 📁 Project Structure
-
-```text
-├── app.py              # Main Streamlit Application
-├── main.py             # Model Training & Evaluation Script
-├── chatbot.py          # AI Assistant Module
-├── best_sleep_apnea_model.pkl  # Pre-trained Random Forest Model
-├── requirements.txt    # Project Dependencies
-└── README.md           # Documentation
+```bash
+cd Sleep-apnea-prediction-using-ecg
+pip install -r requirements.txt
+streamlit run app.py
 ```
 
-## 📜 Disclaimer
+Open `http://localhost:8501`. Use any email/password and select **Lab**, **Patient**, or **Doctor**.
 
-This system is intended for **preliminary screening and educational purposes only**. It is not a substitute for professional medical diagnosis, advice, or treatment. Always consult with a qualified healthcare provider for any medical concerns.
+**Demo path:** Lab uploads ECG for a patient email → Patient logs in, adds vitals, forwards → Doctor runs AI and sends prescription → Patient views completed record.
+
+## Project structure
+
+```text
+├── app.py                      # Streamlit portals (Lab / Patient / Doctor)
+├── db_handler.py               # JSON DB + status transitions
+├── main.py                     # Training & evaluation
+├── chatbot.py                  # Medical assistant
+├── best_sleep_apnea_model.pkl  # Pre-trained Random Forest
+├── requirements.txt
+└── README.md
+```
+
+Parent repo docs: [../README.md](../README.md) · [../ARCHITECTURE.md](../ARCHITECTURE.md)
+
+## Disclaimer
+
+For **preliminary screening and educational purposes only**. Not a substitute for professional medical diagnosis or treatment.
 
 ---
-Developed by [Saravanan](https://github.com/Saravanan2005real) , Hariprasath, Dinesh
 
+Developed as part of **HealthGuard AI** — SRM University  
+Saravanan Sathishkumar · Evangelin John · Daiwakshya · Sumukesh

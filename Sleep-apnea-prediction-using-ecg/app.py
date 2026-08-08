@@ -20,6 +20,7 @@ warnings.filterwarnings("ignore", message=".*InconsistentVersionWarning.*")
 
 import db_handler
 import os
+import uuid
 import joblib
 import matplotlib.pyplot as plt
 import numpy as np
@@ -1798,7 +1799,6 @@ def login_page():
     st.markdown("</div>", unsafe_allow_html=True)
 
 def user_portal():
-    # Chatbot for user
     render_chatbot()
     
     st.markdown(f"<h2 class='main-title'>Patient Portal</h2>", unsafe_allow_html=True)
@@ -1810,54 +1810,62 @@ def user_portal():
             st.session_state.logged_in = False
             st.rerun()
             
-    st.markdown("<div class='medical-report'>", unsafe_allow_html=True)
-    st.markdown("<div class='section-title'>📤 Upload New ECG Data</div>", unsafe_allow_html=True)
-    
-    with st.form("patient_data_form"):
-        col1, col2 = st.columns(2)
-        with col1:
-            age = st.number_input("Age", 1, 120, 40)
-            gender = st.selectbox("Gender", ["Male", "Female"])
-            height = st.number_input("Height (cm)", 100.0, 250.0, 170.0)
-            weight = st.number_input("Weight (kg)", 30.0, 200.0, 70.0)
-        with col2:
-            snoring = st.selectbox("Snoring", ["Yes", "No"])
-            spo2 = st.number_input("SpO2 (%)", 70.0, 100.0, 95.0)
-            uploaded_file = st.file_uploader("Upload ECG Data (.dat, .csv, .txt)", type=["dat", "csv", "txt"])
-        
-        submitted = st.form_submit_button("Submit to Doctor")
-        if submitted:
-            if uploaded_file is not None:
-                patient_data = {
-                    "age": age, "gender": gender, "height": height, "weight": weight,
-                    "snoring": snoring, "spo2": spo2
-                }
-                
-                os.makedirs("uploads", exist_ok=True)
-                file_path = os.path.join("uploads", uploaded_file.name)
-                with open(file_path, "wb") as f:
-                    f.write(uploaded_file.getbuffer())
-                
-                db_handler.add_submission(st.session_state.email, patient_data, file_path)
-                st.success("Data submitted successfully! Your doctor will review it soon.")
-            else:
-                st.error("Please upload an ECG file.")
-    st.markdown("</div>", unsafe_allow_html=True)
-    
-    st.markdown("<div class='medical-report'>", unsafe_allow_html=True)
-    st.markdown("<div class='section-title'>📄 My Prescriptions</div>", unsafe_allow_html=True)
+    # Fetch submissions for this user
     submissions = db_handler.get_submissions_by_user(st.session_state.email)
-    has_prescriptions = False
-    for sub in reversed(submissions):
-        if sub.get('prescription'):
-            has_prescriptions = True
-            with st.expander(f"Prescription for submission on {sub['timestamp']}"):
+    
+    # 1. Pending Actions (from Lab)
+    pending_from_lab = [s for s in submissions if s['status'] == 'At User']
+    if pending_from_lab:
+        st.markdown("<div class='medical-report' style='border: 2px solid #3b82f6;'>", unsafe_allow_html=True)
+        st.markdown("<div class='section-title'>🔔 Action Required: New Lab Results</div>", unsafe_allow_html=True)
+        st.info("Your laboratory results have arrived. Please fill in your current vitals to forward them to your doctor.")
+        
+        for sub in reversed(pending_from_lab):
+            with st.expander(f"ECG Report from {sub['timestamp']}", expanded=True):
+                with st.form(key=f"patient_data_form_{sub['id']}"):
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        age = st.number_input("Age", 1, 120, 40)
+                        gender = st.selectbox("Gender", ["Male", "Female"])
+                        height = st.number_input("Height (cm)", 100.0, 250.0, 170.0)
+                        weight = st.number_input("Weight (kg)", 30.0, 200.0, 70.0)
+                    with col2:
+                        snoring = st.selectbox("Snoring", ["Yes", "No"])
+                        spo2 = st.number_input("SpO2 (%)", 70.0, 100.0, 95.0)
+                    
+                    submitted = st.form_submit_button("Forward to Doctor")
+                    if submitted:
+                        patient_data = {
+                            "age": age, "gender": gender, "height": height, "weight": weight,
+                            "snoring": snoring, "spo2": spo2
+                        }
+                        db_handler.update_patient_details(sub['id'], patient_data)
+                        st.success("Data securely forwarded to your doctor!")
+                        st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
+    
+    # 2. In Progress (At Doctor)
+    at_doctor = [s for s in submissions if s['status'] in ['At Doctor', 'Predicted']]
+    if at_doctor:
+        st.markdown("<div class='medical-report'>", unsafe_allow_html=True)
+        st.markdown("<div class='section-title'>⏳ Under Doctor Review</div>", unsafe_allow_html=True)
+        for sub in reversed(at_doctor):
+            st.info(f"Report from {sub['timestamp']} is currently being reviewed by your doctor.")
+        st.markdown("</div>", unsafe_allow_html=True)
+    
+    # 3. Completed Prescriptions
+    completed = [s for s in submissions if s['status'] == 'Completed']
+    st.markdown("<div class='medical-report'>", unsafe_allow_html=True)
+    st.markdown("<div class='section-title'>📄 My Medical Records & Prescriptions</div>", unsafe_allow_html=True)
+    if completed:
+        for sub in reversed(completed):
+            with st.expander(f"Prescription for consultation on {sub['timestamp']}", expanded=True):
                 st.markdown("<div class='medical-info'>", unsafe_allow_html=True)
                 st.markdown(f"**Risk Level:** {sub['prediction']['risk_level']}")
                 st.write(sub['prescription'])
                 st.markdown("</div>", unsafe_allow_html=True)
-    if not has_prescriptions:
-        st.info("No prescriptions received yet.")
+    else:
+        st.info("No completed prescriptions yet.")
     st.markdown("</div>", unsafe_allow_html=True)
 
 def doctor_portal():
@@ -1871,23 +1879,24 @@ def doctor_portal():
             st.rerun()
             
     st.markdown("<div class='medical-report'>", unsafe_allow_html=True)
-    st.markdown("<div class='section-title'>📋 Pending Patient Submissions</div>", unsafe_allow_html=True)
+    st.markdown("<div class='section-title'>📋 Patient Queue</div>", unsafe_allow_html=True)
     
     submissions = db_handler.get_all_submissions()
-    pending = [s for s in submissions if s['status'] != 'Completed']
+    # Doctor only sees items that are 'At Doctor' or 'Predicted'
+    pending = [s for s in submissions if s['status'] in ['At Doctor', 'Predicted']]
     completed = [s for s in submissions if s['status'] == 'Completed']
     
     if not pending:
-        st.info("No pending submissions.")
+        st.info("No patients currently in queue.")
         
     for sub in reversed(pending):
-        with st.expander(f"Patient: {sub['user_email']} | Date: {sub['timestamp']} | Status: {sub['status']}", expanded=(sub['status']=='Pending')):
+        with st.expander(f"Patient: {sub['user_email']} | Date: {sub['timestamp']}", expanded=(sub['status']=='At Doctor')):
             pd = sub['patient_data']
             st.markdown(f"**Age:** {pd['age']} | **Gender:** {pd['gender']} | **BMI:** {pd['weight']/(pd['height']/100)**2:.1f} | **SpO2:** {pd['spo2']}%")
             
-            if sub['status'] == 'Pending':
-                if st.button("🧠 AI Prediction", key=f"predict_{sub['id']}"):
-                    with st.spinner("Running AI prediction model..."):
+            if sub['status'] == 'At Doctor':
+                if st.button("🧠 Run AI Prediction on ECG", key=f"predict_{sub['id']}"):
+                    with st.spinner("Analyzing physiological data via Random Forest..."):
                         class MockFile:
                             def __init__(self, path):
                                 self.path = path
@@ -1919,35 +1928,60 @@ def doctor_portal():
                 st.markdown(f'''
                 <div class="diagnosis-card {cls}">
                     <div class="diagnosis-title">{sub['prediction']['risk_level']}</div>
-                    <div class="confidence-badge">Confidence: {sub['prediction']['percentage']:.1f}%</div>
+                    <div class="confidence-badge">AI Confidence: {sub['prediction']['percentage']:.1f}%</div>
                 </div>
                 ''', unsafe_allow_html=True)
                 
                 if not sub['prescription']:
                     with st.form(key=f"prescribe_{sub['id']}"):
-                        st.markdown("**Write Prescription**")
-                        prescription_text = st.text_area("Details (Pamphlet)", height=150)
+                        st.markdown("**Clinical Prescription (To be translated by Llama for Patient)**")
+                        prescription_text = st.text_area("Details", height=150, placeholder="e.g., Recommend CPAP titration study...")
                         if st.form_submit_button("Submit & Send to Patient"):
-                            db_handler.update_submission(sub['id'], prescription=prescription_text)
-                            st.success("Prescription sent!")
-                            st.rerun()
+                            if prescription_text.strip():
+                                db_handler.update_submission(sub['id'], prescription=prescription_text)
+                                st.success("Prescription securely transmitted to patient portal.")
+                                st.rerun()
+                            else:
+                                st.error("Please enter a prescription.")
 
     if completed:
         st.markdown("### Completed Consultations")
         for sub in reversed(completed):
             with st.expander(f"Patient: {sub['user_email']} | Completed"):
+                st.markdown(f"**Prediction:** {sub['prediction']['risk_level']}")
                 st.write(sub['prescription'])
                 
     st.markdown("</div>", unsafe_allow_html=True)
 
 def lab_portal():
-    st.markdown("<h2 class='main-title'>Lab Portal</h2>", unsafe_allow_html=True)
-    if st.button("Logout"):
-        st.session_state.logged_in = False
-        st.rerun()
+    st.markdown("<h2 class='main-title'>Laboratory Portal</h2>", unsafe_allow_html=True)
+    st.markdown("<p class='subtitle'>Upload patient diagnostics</p>", unsafe_allow_html=True)
     
+    col1, col2 = st.columns([8, 1])
+    with col2:
+        if st.button("Logout"):
+            st.session_state.logged_in = False
+            st.rerun()
+            
     st.markdown("<div class='medical-report'>", unsafe_allow_html=True)
-    st.info("Lab management interface to be implemented.")
+    st.markdown("<div class='section-title'>📤 New ECG Upload</div>", unsafe_allow_html=True)
+    
+    with st.form("lab_upload_form"):
+        target_email = st.text_input("Patient Email", placeholder="e.g., saro@gmail.com")
+        uploaded_file = st.file_uploader("Upload ECG Data (.dat, .csv, .txt)", type=["dat", "csv", "txt"])
+        
+        submitted = st.form_submit_button("Send to Patient")
+        if submitted:
+            if target_email and uploaded_file is not None:
+                os.makedirs("uploads", exist_ok=True)
+                file_path = os.path.join("uploads", f"{uuid.uuid4().hex}_{uploaded_file.name}")
+                with open(file_path, "wb") as f:
+                    f.write(uploaded_file.getbuffer())
+                
+                db_handler.add_submission(target_email.strip(), file_path)
+                st.success(f"ECG data successfully sent to {target_email}!")
+            else:
+                st.error("Please provide both the patient email and an ECG file.")
     st.markdown("</div>", unsafe_allow_html=True)
 
 def main():
